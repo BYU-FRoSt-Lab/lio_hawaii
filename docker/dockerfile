@@ -1,0 +1,65 @@
+# Other distros may not be supported with all of the packages listed below
+ARG ROS_DISTRO=humble 
+
+FROM ros:${ROS_DISTRO}
+
+# Install dependent packages
+RUN apt-get update && apt-get install -y nano \
+    ros-${ROS_DISTRO}-gtsam \
+    ros-${ROS_DISTRO}-perception-pcl \
+    ros-${ROS_DISTRO}-pcl-msgs \
+    ros-${ROS_DISTRO}-vision-opencv \
+    ros-${ROS_DISTRO}-xacro \
+    ros-${ROS_DISTRO}-rviz2 \
+    ros-${ROS_DISTRO}-geodesy \
+    libgeographic-dev \
+    libpcap-dev \
+    cmake \
+    vim \
+    tmux \
+    python3-pip \
+    && pip3 install --upgrade pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Segmentation Libraries
+RUN python3 -m pip install numpy matplotlib opencv-python open3d ouster-sdk 
+
+# Install Ouster
+WORKDIR /root/ros2_ws/src
+RUN git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git
+
+# Build Ouster
+RUN cd .. && \
+    . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    MAKEFLAGS="-j2 -l2" colcon build \
+    --executor sequential \
+    --symlink-install \
+    --cmake-args -DCMAKE_BUILD_TYPE=Release \
+    --packages-select ouster_sensor_msgs ouster_ros
+
+# Build LIO-RF and LIORF-Localization in the src directory
+COPY ./liorf ./liorf
+RUN CPUS=$(nproc) && \
+    JOBS=$((CPUS / 2)) && \
+    if [ "$JOBS" -lt 1 ]; then JOBS=1; fi && \
+    LOAD_LIMIT=$CPUS && \
+    export MAKEFLAGS="-j$JOBS -l$LOAD_LIMIT" && \
+    cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    MAKEFLAGS="-j2 -l2" colcon build \
+    --symlink-install \
+    --cmake-args \
+    -DCMAKE_BUILD_TYPE=Release \
+    --packages-select liorf
+
+WORKDIR /root/ros2_ws
+
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
+    echo "if [ -f /root/ros2_ws/install/setup.bash ]; then" >> ~/.bashrc && \
+    echo "  source /root/ros2_ws/install/setup.bash" >> ~/.bashrc && \
+    echo "fi" >> ~/.bashrc
+
+COPY docker/ros_entrypoint.sh /ros_entrypoint.sh
+RUN chmod +x /ros_entrypoint.sh
+ENTRYPOINT [ "/ros_entrypoint.sh" ]
+CMD ["bash"]
+ 
