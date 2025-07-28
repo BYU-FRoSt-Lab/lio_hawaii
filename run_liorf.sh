@@ -36,6 +36,7 @@ liorf() {
         echo "  -t, --tag <tag>         Specify the Docker image tag (default: 'latest')."
         echo "  -d, --dont_play_bag     Don't play bag files upon starting docker container. Still volumed in."
         echo "  -h, --help              Display this help message."
+        echo "  -x                      Allow docker to access xhost for host machine (xhost +local:docker)."
         echo ""
         echo "Arguments:"
         echo "  <launch_type>           Required. Specifies which ROS 2 launch file to use:"
@@ -102,6 +103,9 @@ liorf() {
                 fi
                 ;;
             -d|--dont_play_bag) play_bag_flag=false
+                shift
+                ;;
+            -x) xhost +local:docker
                 shift
                 ;;
             -h|--help) # Help message is already handled at the top, but include here for robustness

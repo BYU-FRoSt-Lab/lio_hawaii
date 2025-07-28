@@ -4,7 +4,7 @@
 _liorf_launch_types="ouster sbg6 sbg9 bentest"
 
 # Define common options for the liorf function itself
-_liorf_main_options="-t --tag -d --dont_play_bag -h --help"
+_liorf_main_options="-t --tag -d --dont_play_bag -h --help -x"
 
 # Define common ros2 bag play flags
 # This list can be extended with more flags as needed
