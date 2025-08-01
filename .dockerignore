@@ -3,4 +3,7 @@
 
 # Include specific stuff
 !/liorf
+!/LIO-SAM
 !/docker
+!/config_liosam
+!/config_liorf

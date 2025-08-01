@@ -4,15 +4,19 @@
 # This makes paths robust regardless of where the script is called from.
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-# Define the image name (base name)
-IMAGE_NAME="frostlab/liorf_hawii"
-# Default tag
-IMAGE_TAG="latest"
-
 # Define the path to the Dockerfile relative to the script's directory.
 # Assuming dockerfile is in a 'docker' subdirectory.
 DOCKERFILE_REL_PATH="dockerfile"
 DOCKERFILE_FULL_PATH="${SCRIPT_DIR}/${DOCKERFILE_REL_PATH}"
+
+if [ $DOCKERFILE_REL_PATH == "Dockerfile_liosam" ]; then # For debugging why lio-sam isn't working
+  # Define the image name (base name)
+  IMAGE_NAME="frostlab/lio_hawaii_liosam"
+else
+  IMAGE_NAME="frostlab/lio_hawaii"
+fi
+# Default tag
+IMAGE_TAG="latest"
 
 # Define the build context for docker build.
 # This means files for the build (like the 'liorf' directory) should be in SCRIPT_DIR or its subdirectories.

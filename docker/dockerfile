@@ -29,23 +29,47 @@ WORKDIR /root/ros2_ws/src
 RUN git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git
 
 # Build Ouster
-RUN cd .. && \
-    . /opt/ros/${ROS_DISTRO}/setup.sh && \
-    MAKEFLAGS="-j2 -l2" colcon build \
-    --executor sequential \
-    --symlink-install \
-    --cmake-args -DCMAKE_BUILD_TYPE=Release \
-    --packages-select ouster_sensor_msgs ouster_ros
-
-# Build LIO-RF and LIORF-Localization in the src directory
-COPY ./liorf ./liorf
 RUN CPUS=$(nproc) && \
     JOBS=$((CPUS / 2)) && \
     if [ "$JOBS" -lt 1 ]; then JOBS=1; fi && \
     LOAD_LIMIT=$CPUS && \
     export MAKEFLAGS="-j$JOBS -l$LOAD_LIMIT" && \
     cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
-    MAKEFLAGS="-j2 -l2" colcon build \
+    colcon build \
+    --executor sequential \
+    --symlink-install \
+    --cmake-args -DCMAKE_BUILD_TYPE=Release \
+    --packages-select ouster_sensor_msgs ouster_ros
+
+# Install and build LIO-SAM
+# Install Livox SDK (Needed for Fast LIO-SAM)
+RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git /Livox-SDK2 && cd /Livox-SDK2 && mkdir build && cd build && cmake .. && make -j && make install
+
+# Install ros2 driver for Livox SDK
+RUN git clone https://github.com/Livox-SDK/livox_ros_driver2.git /ws_livox/src/livox_ros_driver2 && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    cd /ws_livox/src/livox_ros_driver2 && ./build.sh ${ROS_DISTRO} && echo "source /ws_livox/install/setup.bash" >> ~/.bashrc
+
+# RUN git clone -b ros2 --recurse-submodules https://github.com/TixiaoShan/LIO-SAM.git
+COPY ./LIO-SAM ./LIO-SAM
+RUN CPUS=$(nproc) && \
+    JOBS=$((CPUS / 2)) && \
+    if [ "$JOBS" -lt 1 ]; then JOBS=1; fi && \
+    LOAD_LIMIT=$CPUS && \
+    export MAKEFLAGS="-j$JOBS -l$LOAD_LIMIT" && \
+    cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    . /ws_livox/install/setup.sh && \
+    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select lio_sam
+
+# Install and build LIO-RF 
+# RUN git clone -b liorf-ros2 --recurse-submodules https://github.com/Y-Ride/liorf.git
+COPY ./liorf ./liorf
+RUN CPUS=$(nproc) && \
+    JOBS=$((CPUS / 2)) && \
+    if [ "$JOBS" -lt 1 ]; then JOBS=1; fi && \
+    LOAD_LIMIT=$JOBS && \
+    export MAKEFLAGS="-j$JOBS -l$LOAD_LIMIT" && \
+    cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build \
     --symlink-install \
     --cmake-args \
     -DCMAKE_BUILD_TYPE=Release \

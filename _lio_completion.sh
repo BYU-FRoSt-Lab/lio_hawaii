@@ -1,18 +1,20 @@
 #!/bin/bash
 
+# Define lio options
+_lio_types="rf sam -e --enter -h -a --add-to-bashrc"
+
 # Define possible launch types
-_liorf_launch_types="ouster sbg6 sbg9 bentest"
+_lio_launch_types="ouster sbg6 sbg9 bentest"
 
 # Define common options for the liorf function itself
-_liorf_main_options="-t --tag -d --dont_play_bag -h --help -x"
+_lio_main_options="-t --tag -n --no-lio -d --dont-play-bag -h --help -x --debug"
 
 # Define common ros2 bag play flags
 # This list can be extended with more flags as needed
-_liorf_bag_play_flags="\
+_lio_bag_play_flags="\
 --loop \
 --rate \
 --start-offset \
--p --start-paused \
 --duration \
 --max-qos-depth \
 --max-liveliness-duration \
@@ -23,7 +25,7 @@ _liorf_bag_play_flags="\
 --qos-override-policy \
 "
 
-_liorf_comp() {
+_lio_comp() {
     local cur prev words cword
     # COMP_WORDS: An array of the words on the current command line.
     # COMP_CWORD: The index into ${COMP_WORDS} of the word containing the current cursor position.
@@ -44,8 +46,8 @@ _liorf_comp() {
         local word_being_checked="${words[i]}"
         local next_word_being_checked="${words[i+1]}"
 
-        # If it's the launch type, just continue (it's always first)
-        if [[ "$i" -eq 1 ]]; then
+        # If it's the lio type or launch type, just continue (it's always first and second)
+        if [[ "$i" -eq 1 || "$i" -eq 2 ]]; then
             continue
         fi
 
@@ -80,16 +82,19 @@ _liorf_comp() {
 
     # --- Suggestion Logic ---
     if [[ "$cword" -eq 1 ]]; then
-        # First argument: launch types (ouster, sbg6, sbg9, bentest)
-        all_suggestions=( $(compgen -W "${_liorf_launch_types}" -- "$cur") )
+        # First argument: lio argument (rm sam)
+        all_suggestions=( $(compgen -W "${_lio_types}" -- "$cur") )
+    elif [[ "$cword" -eq 2 ]]; then
+        # Second argument: launch types (ouster, sbg6, sbg9, bentest)
+        all_suggestions=( $(compgen -W "${_lio_launch_types}" -- "$cur") )
     elif [[ "$cur" == -* ]]; then
         # Current word starts with a hyphen: suggest flags based on which section we're in
         if [[ "$section_allows_bag_flags" == true ]]; then
             # After bag files/flags, suggest only ros2 bag play flags
-            all_suggestions=( $(compgen -W "${_liorf_bag_play_flags}" -- "$cur") )
+            all_suggestions=( $(compgen -W "${_lio_bag_play_flags}" -- "$cur") )
         else
             # Before bag files/flags, suggest only main options
-            all_suggestions=( $(compgen -W "${_liorf_main_options}" -- "$cur") )
+            all_suggestions=( $(compgen -W "${_lio_main_options}" -- "$cur") )
         fi
     else
         # Current word does NOT start with a hyphen (e.g., empty string, partial path, or a flag argument)
@@ -134,4 +139,4 @@ _liorf_comp() {
 }
 
 # Register the completion function
-complete -F _liorf_comp liorf
+complete -F _lio_comp lio

@@ -1,0 +1,8 @@
+[submodule "liorf"]
+	path = liorf
+	url = https://github.com/Y-Ride/liorf.git
+	branch = liorf-ros2
+[submodule "LIO-SAM"]
+	path = LIO-SAM
+	url = https://github.com/TixiaoShan/LIO-SAM.git
+	branch = ros2
