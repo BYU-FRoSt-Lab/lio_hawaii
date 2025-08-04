@@ -29,12 +29,7 @@ WORKDIR /root/ros2_ws/src
 RUN git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git
 
 # Build Ouster
-RUN CPUS=$(nproc) && \
-    JOBS=$((CPUS / 2)) && \
-    if [ "$JOBS" -lt 1 ]; then JOBS=1; fi && \
-    LOAD_LIMIT=$CPUS && \
-    export MAKEFLAGS="-j$JOBS -l$LOAD_LIMIT" && \
-    cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build \
     --executor sequential \
     --symlink-install \
@@ -51,24 +46,14 @@ RUN git clone https://github.com/Livox-SDK/livox_ros_driver2.git /ws_livox/src/l
 
 # RUN git clone -b ros2 --recurse-submodules https://github.com/TixiaoShan/LIO-SAM.git
 COPY ./LIO-SAM ./LIO-SAM
-RUN CPUS=$(nproc) && \
-    JOBS=$((CPUS / 2)) && \
-    if [ "$JOBS" -lt 1 ]; then JOBS=1; fi && \
-    LOAD_LIMIT=$CPUS && \
-    export MAKEFLAGS="-j$JOBS -l$LOAD_LIMIT" && \
-    cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
     . /ws_livox/install/setup.sh && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select lio_sam
 
 # Install and build LIO-RF 
 # RUN git clone -b liorf-ros2 --recurse-submodules https://github.com/Y-Ride/liorf.git
 COPY ./liorf ./liorf
-RUN CPUS=$(nproc) && \
-    JOBS=$((CPUS / 2)) && \
-    if [ "$JOBS" -lt 1 ]; then JOBS=1; fi && \
-    LOAD_LIMIT=$JOBS && \
-    export MAKEFLAGS="-j$JOBS -l$LOAD_LIMIT" && \
-    cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build \
     --symlink-install \
     --cmake-args \
